@@ -39,10 +39,13 @@ if __name__ == '__main__':
     parser.add_argument("--domain", type=str, default='digits',
                          choices=['digits', 'office'],
                          help="Domain from which the dataset belongs.")
-    parser.add_argument("--dataset", type=str, default='mnist',
+    parser.add_argument("--source", type=str, default='mnist',
                          choices=['mnist', 'usps', 'svhn', 'webcam', 'amazon', 'dslr'],
-                         help="Dataset to be used for the experiment.")
-    parser.add_argument("--n_shots", type=int, default=1,
+                         help="Dataset to be used as source for the experiment.")
+    parser.add_argument("--target", type=str, default='mnist',
+                         choices=['mnist', 'usps', 'svhn', 'webcam', 'amazon', 'dslr'],
+                         help="Dataset to be used as target for the experiment.")
+    parser.add_argument("--n_shots", type=int, default=3,
                          help="Number of labeled samples to be used for the target.")
     parser.add_argument("--n_val", type=int, default=3,
                          help="Number of labeled samples to be used for validation.")
@@ -51,9 +54,6 @@ if __name__ == '__main__':
                          help="Name of the model to be used for the experiment.")
     parser.add_argument("--report_every", type=int, default=50,
                         help="Number of iterations from which the metrics must be reported.")
-    parser.add_argument("--fold", type=int, default=0,
-                        help="For the hyperparameter search, there are defined 5 folds. \
-                              This argument defines the fold to be used for the experiment.")
     args = parser.parse_args() 
     
     seed_everything()
@@ -62,8 +62,8 @@ if __name__ == '__main__':
 
     # create dir to store the results.
     parent_dir = 'MME/results'
-    job_name = '{}_latentdim{}_lr{}_fold{}_{}_{}shots'.format(args.dataset, args.latent_dim, 
-               str(args.lr), args.fold, args.model_name, args.n_shots)
+    job_name = '{}_{}_{}_{}_{}shots'.format(args.domain, args.source, args.target,
+               args.model_name, args.n_shots)
     directory = os.path.join(parent_dir, job_name)
     if not os.path.exists(directory):
         os.makedirs(directory)
@@ -84,7 +84,7 @@ if __name__ == '__main__':
         dataloader_source, dataloader_sup, dataloader_unsup, \
          dataloader_val, dataloader_test = get_digits(args)
 
-    ssvade = Trainer(args, 
+    mme = Trainer(args, 
                 device,
                 writer,
                 directory,
@@ -92,8 +92,5 @@ if __name__ == '__main__':
                 dataloader_sup,
                 dataloader_unsup,
                 dataloader_val)
-    ssvade.train()
-    evaluate(ssvade.model, device, dataloader_test, directory, 'test', args)
-
-
-
+    mme.train()
+    evaluate(mme.ftr_ext, mme.clf, device, dataloader_test, directory, 'test', args)
