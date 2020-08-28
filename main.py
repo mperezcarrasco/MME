@@ -1,0 +1,99 @@
+import os
+import torch
+import argparse
+
+from utils.utils import seed_everything
+from preprocess import get_digits, get_office
+from train import Trainer
+from test import evaluate
+
+from torch.utils.tensorboard import SummaryWriter
+
+def create_dirs(root_dir, dirs_to_create):
+    """create directories to save metrics, plots, weights, etc...
+    Args:
+        root_dir (str): Root directory which contains all the experimentation.
+        dirs_to_create(list): list of directories to create inside the root_dir.
+    """
+    for dir_ in dirs_to_create:
+        dir_path = os.path.join(root_dir, dir_)
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--num_iterations", type=int, default=50000,
+                        help="Training epochs.")
+    parser.add_argument("--batch_size", type=int, default=32,
+                        help="Size of each mini-batch.")
+    parser.add_argument("--lr", type=float, default=0.01,
+                        help="Learning rate for the Adam optimizer.")
+    parser.add_argument("--patience", type=int, default=10,
+                        help="Patience for the early stopping.")
+    parser.add_argument("--latent_dim", type=int, default=32,
+                        help="Dimension of the latent space of the Autoencoder.")
+    parser.add_argument("--temperature", type=float, default=0.05,
+                        help="Hyperparameter temperature.")
+    parser.add_argument("--lambda_", type=float, default=0.1,
+                        help="Hyperparameter lambda.")
+    parser.add_argument("--domain", type=str, default='digits',
+                         choices=['digits', 'office'],
+                         help="Domain from which the dataset belongs.")
+    parser.add_argument("--dataset", type=str, default='mnist',
+                         choices=['mnist', 'usps', 'svhn', 'webcam', 'amazon', 'dslr'],
+                         help="Dataset to be used for the experiment.")
+    parser.add_argument("--n_shots", type=int, default=1,
+                         help="Number of labeled samples to be used for the target.")
+    parser.add_argument("--n_val", type=int, default=3,
+                         help="Number of labeled samples to be used for validation.")
+    parser.add_argument("--model_name", type=str, default='AlexnetDigits',
+                         choices=['Alexnet', 'VGG16', 'AlexnetDigits'],
+                         help="Name of the model to be used for the experiment.")
+    parser.add_argument("--report_every", type=int, default=50,
+                        help="Number of iterations from which the metrics must be reported.")
+    parser.add_argument("--fold", type=int, default=0,
+                        help="For the hyperparameter search, there are defined 5 folds. \
+                              This argument defines the fold to be used for the experiment.")
+    args = parser.parse_args() 
+    
+    seed_everything()
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    # create dir to store the results.
+    parent_dir = 'MME/results'
+    job_name = '{}_latentdim{}_lr{}_fold{}_{}_{}shots'.format(args.dataset, args.latent_dim, 
+               str(args.lr), args.fold, args.model_name, args.n_shots)
+    directory = os.path.join(parent_dir, job_name)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    # create weights dir.
+    create_dirs(directory, ['plots', 'weights'])
+
+    # Tensorboard logger
+    writer = SummaryWriter(directory)
+
+    #Create all the dataloaders.
+    if args.domain == 'office':
+        args.n_classes=31
+        dataloader_source, dataloader_sup, dataloader_unsup, \
+        dataloader_val, dataloader_test = get_office(args)
+    elif args.domain == 'digits':
+        args.n_classes=10
+        dataloader_source, dataloader_sup, dataloader_unsup, \
+         dataloader_val, dataloader_test = get_digits(args)
+
+    ssvade = Trainer(args, 
+                device,
+                writer,
+                directory,
+                dataloader_source,
+                dataloader_sup,
+                dataloader_unsup,
+                dataloader_val)
+    ssvade.train()
+    evaluate(ssvade.model, device, dataloader_test, directory, 'test', args)
+
+
+
