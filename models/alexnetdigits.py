@@ -16,28 +16,23 @@ class AlexnetDigits(nn.Module):
             in_channels = 3
         else:
             in_channels = 1
+        
+        self.features = nn.Sequential(Conv(in_channels, conv_dim, 5, 2, 2),
+                                      nn.LeakyReLU(0.05, inplace=True),
+                                      Conv(conv_dim, conv_dim*2, 5, 2, 2),
+                                      nn.LeakyReLU(0.05, inplace=True)
+                                      Conv(conv_dim*2, conv_dim*4, 5, 2, 2),
+                                      nn.LeakyReLU(0.05, inplace=True)
+                                      Conv(conv_dim*4, conv_dim*8, 4, 1, 0),
+                                      nn.LeakyReLU(0.05, inplace=True))
 
-        self.cnn1 = Conv(in_channels, conv_dim, 5, 2, 2)
-        self.cnn2 = Conv(conv_dim, conv_dim*2, 5, 2, 2)
-        self.cnn3 = Conv(conv_dim*2, conv_dim*4, 5, 2, 2)
-        self.cnn4 = Conv(conv_dim*4, conv_dim*8, 4, 1, 0)
-
-        self.fc1 = nn.Linear(512, 256)
-        self.fc2 = nn.Linear(256, 128)
-        self.fc3 = nn.Linear(128, 64)
-
-
-    def features(self, x):
-        h = F.leaky_relu(self.cnn1(x), 0.05)
-        h = F.leaky_relu(self.cnn2(h), 0.05)
-        h = F.leaky_relu(self.cnn3(h), 0.05)
-        h = F.leaky_relu(self.cnn4(h), 0.05)
-        return h.view(-1, 512)
-
-    def classifier(self, x):
-        h = self.fc1(x)
-        h = self.fc2(x)
-        return self.fc3(h)
+        self.classifier = nn.Sequential(nn.Dropout(),
+                                        nn.Linear(512, 256),
+                                        nn.LeakyReLU(0.05, inplace=True),
+                                        nn.Dropout()
+                                        nn.Linear(256, 128),
+                                        nn.LeakyReLU(0.05, inplace=True)
+                                        nn.Linear(128, 64))
 
     def forward(self, x):
         x = self.features(x)
