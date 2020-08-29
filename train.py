@@ -5,7 +5,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from models.main import build_network, build_classifier
 from sklearn.metrics import accuracy_score
-from utils.utils import EarlyStopping, weights_init, save_metrics
+from utils.utils import EarlyStopping, weights_init, save_metrics, inv_lr_scheduler
 from itertools import cycle
 import numpy as np
 
@@ -48,10 +48,28 @@ class Trainer(object):
     def train(self):
         """Training module."""
         self.clf.apply(weights_init)
-        self.optimizer_f = SGD(self.ftr_ext.parameters(), lr=self.args.lr, momentum=0.9,
+
+        params = []
+        for key, value in dict(self.ftr_ext.named_parameters()).items():
+            if value.requires_grad:
+                if 'classifier' not in key:
+                    params += [{'params': [value], 'lr': 0.1,
+                                'weight_decay': 0.0005}]
+                else:
+                    params += [{'params': [value], 'lr': 0.1 * 10,
+                                'weight_decay': 0.0005}]
+
+        self.optimizer_f = SGD(params, lr=self.args.lr, momentum=0.9,
                             weight_decay=0.0005, nesterov=True)
         self.optimizer_c = SGD(self.clf.parameters(), lr=1.0, momentum=0.9,
                             weight_decay=0.0005, nesterov=True)
+
+        param_lr_f = []
+        for param_group in self.optimizer_f.param_groups:
+            param_lr_f.append(param_group["lr"])
+        param_lr_c = []
+        for param_group in self.optimizer_c.param_groups:
+            param_lr_c.append(param_group["lr"])
 
         # Some images to be reconstructed every 50 epochs.
         iteration=0
@@ -66,6 +84,11 @@ class Trainer(object):
                 x_sup_t = x_sup_t.float().to(self.device)
                 y_sup_t = y_sup_t.long().to(self.device)
                 x_unsup_t = x_unsup_t.float().to(self.device)
+
+                self.optimizer_f = inv_lr_scheduler(param_lr_f, self.optimizer_f, iteration,
+                                       init_lr=self.args.lr)
+                self.optimizer_c = inv_lr_scheduler(param_lr_c, self.optimizer_c, iteration,
+                                       init_lr=self.args.lr)
 
                 self.ftr_ext.train()
                 self.clf.train()
