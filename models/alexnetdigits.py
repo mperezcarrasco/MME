@@ -20,9 +20,9 @@ class AlexnetDigits(nn.Module):
         self.features = nn.Sequential(Conv(in_channels, conv_dim, 5, 2, 2),
                                       nn.LeakyReLU(0.05, inplace=True),
                                       Conv(conv_dim, conv_dim*2, 5, 2, 2),
-                                      nn.LeakyReLU(0.05, inplace=True)
+                                      nn.LeakyReLU(0.05, inplace=True),
                                       Conv(conv_dim*2, conv_dim*4, 5, 2, 2),
-                                      nn.LeakyReLU(0.05, inplace=True)
+                                      nn.LeakyReLU(0.05, inplace=True),
                                       Conv(conv_dim*4, conv_dim*8, 4, 1, 0),
                                       nn.LeakyReLU(0.05, inplace=True))
 
