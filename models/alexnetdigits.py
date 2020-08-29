@@ -12,7 +12,7 @@ class AlexnetDigits(nn.Module):
     """
     def __init__(self, args, conv_dim=64):
         super(AlexnetDigits, self).__init__()
-        if args.dataset == 'svhn':
+        if args.source == 'svhn' or args.target == 'svhn':
             in_channels = 3
         else:
             in_channels = 1

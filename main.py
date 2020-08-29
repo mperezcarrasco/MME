@@ -52,6 +52,8 @@ if __name__ == '__main__':
     parser.add_argument("--model_name", type=str, default='AlexnetDigits',
                          choices=['Alexnet', 'VGG16', 'AlexnetDigits'],
                          help="Name of the model to be used for the experiment.")
+    parser.add_argument("--pretrain", type=bool, default=True,
+                         help="If domain is not digits, if the model must be pretrained on ImageNet.")
     parser.add_argument("--report_every", type=int, default=50,
                         help="Number of iterations from which the metrics must be reported.")
     args = parser.parse_args() 
