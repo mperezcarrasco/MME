@@ -1,5 +1,5 @@
 import torch
-from torch.optim import Adam
+from torch.optim import SGD
 from torch.nn import functional as F
 from torch.utils.tensorboard import SummaryWriter
 
