@@ -154,6 +154,11 @@ def get_mnist(args, domain, data_dir='./data/mnist/'):
         return dataloader_source
 
     elif domain=='target':
+        if args.source=='svhn':
+            x_test, y_test = test.data.numpy(), test.targets
+            x_train = np.repeat(x_train.reshape(-1, 28, 28, 1), 3, 3)
+            x_test = np.repeat(x_test.reshape(-1, 28, 28, 1), 3, 3)
+        
         x_val, y_val, ixs = get_labeled_samples(x_train, y_train, args.n_val)
         dataloader_val = DataLoader(DigitDataset(x_val, y_val), batch_size=args.batch_size*2, 
                                     shuffle=False)
@@ -168,8 +173,6 @@ def get_mnist(args, domain, data_dir='./data/mnist/'):
         dataloader_unsup = DataLoader(DigitDataset(x_train, y_train), batch_size=args.batch_size*2, 
                                     shuffle=True)
         
-        x_test = test.data.numpy()
-        y_test = test.targets
         dataloader_test = DataLoader(DigitDataset(x_test, y_test), batch_size=args.batch_size*2, 
                                     shuffle=False)
 
@@ -190,6 +193,10 @@ def get_usps(args, domain, data_dir='./data/usps'):
         return dataloader_source
 
     elif domain=='target':
+        if args.source=='svhn':
+            x_train = np.repeat(x_train.reshape(-1, 28, 28, 1), 3, 3)
+            x_test = np.repeat(x_test.reshape(-1, 28, 28, 1), 3, 3)
+        
         x_val, y_val, ixs = get_labeled_samples(x_train, y_train, args.n_val)
         dataloader_val = DataLoader(DigitDataset(x_val, y_val), batch_size=args.batch_size*2, 
                                     shuffle=False)
