@@ -63,7 +63,7 @@ if __name__ == '__main__':
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # create dir to store the results.
-    parent_dir = 'MME/results'
+    parent_dir = 'results'
     job_name = '{}_{}_{}_{}_{}shots'.format(args.domain, args.source, args.target,
                args.model_name, args.n_shots)
     directory = os.path.join(parent_dir, job_name)
@@ -71,7 +71,7 @@ if __name__ == '__main__':
         os.makedirs(directory)
 
     # create weights dir.
-    create_dirs(directory, ['plots', 'weights'])
+    create_dirs(directory, ['weights'])
 
     # Tensorboard logger
     writer = SummaryWriter(directory)

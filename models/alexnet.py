@@ -23,5 +23,4 @@ class Alexnet(nn.Module):
         x = self.features(x)
         x = x.view(-1, 256 * 6 * 6)
         x = self.classifier(x)
-        print(x.shape)
         return x

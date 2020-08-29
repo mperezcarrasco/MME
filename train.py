@@ -94,12 +94,13 @@ class Trainer(object):
                 self.optimizer_f.step()
                 self.optimizer_c.step()
 
-                if epoch%self.args.report_every==0:
-                    metrics = {'Accuracy': accuracy_score(y.cpu().numpy(), pred.detach().cpu().numpy()),
+                if iteration%self.args.report_every==0:
+                    pred = np.argmax(pred.detach().cpu().numpy(), axis=1)
+                    metrics = {'Accuracy': accuracy_score(y.cpu().numpy(), pred),
                                'Total Loss': l_xent.item()}
-                    self.print_and_log(metrics, 'train', epoch)
-                    stop = self.validate(epoch)
-                epoch+=1
+                    self.print_and_log(metrics, 'train', iteration)
+                    stop = self.validate(iteration)
+                iteration+=1
                 if stop or iteration>=self.args.num_iterations:
                     iteration=9999999
                     break
@@ -120,17 +121,17 @@ class Trainer(object):
         with torch.no_grad():
             for x, y in self.dl_val_t:
                 x = x.float().to(self.device)
-                y = x.long().to(self.device)
+                y = y.long().to(self.device)
 
                 # Computing the reconstruction score for each datapoint.
                 x_out = self.ftr_ext(x)
                 pred = self.clf(x_out)
 
-                total_loss+=F.cross_entropy(pred, y)
+                total_loss+=F.cross_entropy(pred, y).item()
                 predictions.append(pred.detach().cpu())
                 labels.append(y.cpu())
                 
-        predictions = torch.cat(predictions).numpy()
+        predictions = np.argmax(torch.cat(predictions).numpy(), axis=1)
         labels = torch.cat(labels).numpy()
         total_loss /= len(self.dl_val_t)
         accuracy = accuracy_score(labels, predictions)
@@ -146,7 +147,7 @@ class Trainer(object):
 
     def adentropy(self, out):
         """Adentropy loss for the MME minimax optimization."""
-        out = F.softmax(out)
+        out = F.softmax(out, dim=1)
         adentropy = -self.args.lambda_ * torch.mean(torch.sum(out * torch.log(out + 1e-10), dim=1))
         return adentropy
 

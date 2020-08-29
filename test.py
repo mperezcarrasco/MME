@@ -37,17 +37,17 @@ def evaluate(ftr_extractor, classifier, device, dataloader, directory, mode, arg
     with torch.no_grad():
         for x, y in dataloader:
             x = x.float().to(device)
-            y = x.long().to(device)
+            y = y.long().to(device)
 
             # Computing the reconstruction score for each datapoint.
             x_out = ftr_extractor(x)
             pred = classifier(x_out)
 
-            total_loss+=criterion(pred, y)
+            total_loss+=criterion(pred, y).item()
             predictions.append(pred.detach().cpu())
             labels.append(y.cpu())
             
-    predictions = torch.cat(predictions).numpy()
+    predictions = np.argmax(torch.cat(predictions).numpy(), axis=1)
     labels = torch.cat(labels).numpy()
     total_loss /= len(dataloader)
 
