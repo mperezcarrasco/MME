@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from grad_reverse import grad_reverse
+from models.grad_reverse import grad_reverse
 
 
 class Classifier(nn.Module):

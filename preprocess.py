@@ -86,7 +86,7 @@ def get_office_dataset(args, domain):
                                       batch_size=batch_size, shuffle=True, drop_last=True)
         return dataloader_train
     elif domain=='target':
-        data_dir='./data/office31/{}/images/'.format(args.dataset)
+        data_dir='./data/office31/{}/images/'.format(args.target)
         data = datasets.ImageFolder(data_dir)
 
         x_train = np.array([np.array(data[i][0]) for i in range(len(data))])

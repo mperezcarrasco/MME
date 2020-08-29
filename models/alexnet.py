@@ -9,9 +9,9 @@ class Alexnet(nn.Module):
     AlexNet pretrained on imagenet for Office dataset. 
     Same model as in the original implementation.
     """
-    def __init__(self, args):
+    def __init__(self, args, pretrain=True):
         super(Alexnet, self).__init__()
-        model = models.alexnet(pretrained=args.pretrain)
+        model = models.alexnet(pretrained=pretrain)
         self.features = model.features
     
         self.classifier = nn.Sequential()

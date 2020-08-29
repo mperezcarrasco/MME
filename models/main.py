@@ -1,14 +1,14 @@
 from models.alexnet import Alexnet
 from models.vgg16 import VGG16
 from models.alexnetdigits import AlexnetDigits
-from classifier import Classifier
+from models.classifier import Classifier
 
 def build_network(args):
     """Builds the feature extractor network for the MME.
-    
+
         Args:
             args: Hyperparameters for the network building.
-        
+
         Returns:
             model (torch.nn.Module): Network architecture.
     """
@@ -31,10 +31,10 @@ def build_network(args):
 
 def build_classifier(args):
     """Builds the classifier for the MME.
-    
+
         Args:
             args: Hyperparameters for the classifier building.
-        
+
         Returns:
             classifier (torch.nn.Module): Network architecture.
     """
