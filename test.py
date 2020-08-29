@@ -74,9 +74,12 @@ if __name__ == '__main__':
     parser.add_argument("--domain", type=str, default='digits',
                          choices=['digits', 'office'],
                          help="Domain from which the dataset belongs.")
-    parser.add_argument("--dataset", type=str, default='mnist',
+    parser.add_argument("--source", type=str, default='mnist',
                          choices=['mnist', 'usps', 'svhn', 'webcam', 'amazon', 'dslr'],
-                         help="Dataset to be used for the experiment.")
+                         help="Dataset to be used as source for the experiment.")
+    parser.add_argument("--target", type=str, default='mnist',
+                         choices=['mnist', 'usps', 'svhn', 'webcam', 'amazon', 'dslr'],
+                         help="Dataset to be used as target for the experiment.")
     parser.add_argument("--n_shots", type=int, default=1,
                          help="Number of labeled samples to be used for supervised training.")
     parser.add_argument("--n_val", type=int, default=3,
@@ -94,9 +97,9 @@ if __name__ == '__main__':
     seed_everything()
 
     # Path to store the results.
-    parent_dir = 'ssVaDE/results'
-    job_name = '{}_latentdim{}_lr{}_fold{}_{}_{}shots'.format(args.dataset, args.latent_dim, 
-               str(args.lr), args.fold, args.model_name, args.n_shots)
+    parent_dir = 'MME/results'
+    job_name = '{}_{}_{}_{}_{}shots'.format(args.domain, args.source, args.target,
+               args.model_name, args.n_shots)
     directory = os.path.join(parent_dir, job_name)
 
     if args.domain == 'office':
