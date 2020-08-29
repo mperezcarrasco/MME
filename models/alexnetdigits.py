@@ -29,9 +29,9 @@ class AlexnetDigits(nn.Module):
         self.classifier = nn.Sequential(nn.Dropout(),
                                         nn.Linear(512, 256),
                                         nn.LeakyReLU(0.05, inplace=True),
-                                        nn.Dropout()
+                                        nn.Dropout(),
                                         nn.Linear(256, 128),
-                                        nn.LeakyReLU(0.05, inplace=True)
+                                        nn.LeakyReLU(0.05, inplace=True),
                                         nn.Linear(128, 64))
 
     def forward(self, x):
