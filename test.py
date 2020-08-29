@@ -69,8 +69,8 @@ if __name__ == '__main__':
                         help="Size of each mini-batch.")
     parser.add_argument("--lr", type=float, default=5e-5,
                         help="Learning rate for the Adam optimizer.")
-    parser.add_argument("--latent_dim", type=int, default=32,
-                        help="Dimension of the latent space of the Autoencoder.")
+    parser.add_argument("--temperature", type=float, default=0.05,
+                        help="Hyperparameter temperature.")
     parser.add_argument("--domain", type=str, default='digits',
                          choices=['digits', 'office'],
                          help="Domain from which the dataset belongs.")
@@ -80,42 +80,42 @@ if __name__ == '__main__':
     parser.add_argument("--target", type=str, default='mnist',
                          choices=['mnist', 'usps', 'svhn', 'webcam', 'amazon', 'dslr'],
                          help="Dataset to be used as target for the experiment.")
-    parser.add_argument("--n_shots", type=int, default=1,
+    parser.add_argument("--n_shots", type=int, default=3,
                          help="Number of labeled samples to be used for supervised training.")
     parser.add_argument("--n_val", type=int, default=3,
                          help="Number of labeled samples to be used for validation.")
     parser.add_argument("--model_name", type=str, default='AlexnetDigits',
                          choices=['Alexnet', 'Alexnetbn', 'VGG16', 'VGG16bn', 'AlexnetDigits'],
                          help="Name of the autoencoder model to be used for the experiment.")
-    parser.add_argument("--fold", type=int, default=0,
-                        help="For the hyperparameter search, there are defined 5 folds. \
-                              This argument set the fold to be used for choosing train and \
-                              validation set for the experiment.")
+    parser.add_argument("--pretrain", type=bool, default=True,
+                         help="If domain is not digits, if the model must be pretrained on ImageNet.")
     args = parser.parse_args() 
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     seed_everything()
 
     # Path to store the results.
-    parent_dir = 'MME/results'
+    parent_dir = 'results'
     job_name = '{}_{}_{}_{}_{}shots'.format(args.domain, args.source, args.target,
                args.model_name, args.n_shots)
     directory = os.path.join(parent_dir, job_name)
 
     if args.domain == 'office':
         args.n_classes=31
-        _, _, _, dataloader_test = get_office(args)
+        _, _, _, _, dataloader_test = get_office(args)
     elif args.domain == 'digits':
         args.n_classes=10
-        _, _, _, dataloader_test = get_digits(args)
+        _, _, _, _, dataloader_test = get_digits(args)
 
     # Call the model.
     model = build_network(args).to(device)
+    classifier = build_classifier(args).to(device)
 
     # Restore the best model.
     weights_dir = os.path.join(directory, 'weights')
     state_dict = torch.load('{}/trained_parameters.pth'.format(weights_dir))
-    model.load_state_dict(state_dict)
+    model.load_state_dict(state_dict['feature_extractor'])
+    classifier.load_state_dict(state_dict['classifier'])
 
     # The number of classes per root level must be a torch tensor.
-    evaluate(model, device, dataloader_test, directory, 'test', args)
+    evaluate(model, classifier, device, dataloader_test, directory, 'test', args)

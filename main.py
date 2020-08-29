@@ -28,7 +28,7 @@ if __name__ == '__main__':
                         help="Size of each mini-batch.")
     parser.add_argument("--lr", type=float, default=0.01,
                         help="Learning rate for the Adam optimizer.")
-    parser.add_argument("--patience", type=int, default=10,
+    parser.add_argument("--patience", type=int, default=5,
                         help="Patience for the early stopping.")
     parser.add_argument("--latent_dim", type=int, default=32,
                         help="Dimension of the latent space of the Autoencoder.")

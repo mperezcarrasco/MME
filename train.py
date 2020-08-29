@@ -1,7 +1,7 @@
 import torch
 from torch.optim import SGD
 from torch.nn import functional as F
-from torch.utils.tensorboard import SummaryWriter
+#from torch.utils.tensorboard import SummaryWriter
 
 from models.main import build_network, build_classifier
 from sklearn.metrics import accuracy_score
@@ -71,11 +71,17 @@ class Trainer(object):
         for param_group in self.optimizer_c.param_groups:
             param_lr_c.append(param_group["lr"])
 
-        # Some images to be reconstructed every 50 epochs.
-        iteration=0
-        for (x_s, y_s), (x_unsup_t,_), (x_sup_t, y_sup_t) in \
-            zip(cycle(self.dl_sup_s), cycle(self.dl_unsup_t), cycle(self.dl_sup_t)):
-            # Converting features to FloatTensor and to device.
+        for iteration in range(self.args.num_iterations):
+            if iteration % len(self.dl_sup_s) == 0:
+                iter_sup_s = iter(self.dl_sup_s)
+            if iteration % len(self.dl_sup_t) == 0:
+                iter_sup_t = iter(self.dl_sup_t)
+            if iteration % len(self.dl_unsup_t) == 0:
+                iter_unsup_t = iter(self.dl_unsup_t)
+            x_s, y_s = next(iter_sup_s)
+            x_sup_t, y_sup_t = next(iter_sup_t)
+            x_unsup_t, _ = next(iter_unsup_t)
+            
             x = torch.cat((x_s, x_sup_t), dim=0)
             y = torch.cat((y_s, y_sup_t), dim=0)
             x = x.float().to(self.device)
@@ -97,8 +103,8 @@ class Trainer(object):
             # CrossEntropy Minimization #
             #############################
             x_out = self.ftr_ext(x)
-            pred = self.clf(x_out)
-            l_xent = F.cross_entropy(pred, y)
+            pred_s = self.clf(x_out)
+            l_xent = F.cross_entropy(pred_s, y)
 
             l_xent.backward(retain_graph=True)
             self.optimizer_f.step()
@@ -109,21 +115,20 @@ class Trainer(object):
             #################
             self.zero_grad()
             x_out = self.ftr_ext(x_unsup_t)
-            pred = self.clf(x_out)
-            l_mm = self.adentropy(x_out)
+            pred_u = self.clf(x_out, grad_rev=True)
+            l_t = self.adentropy(pred_u)
 
-            l_mm.backward()
+            l_t.backward()
             self.optimizer_f.step()
             self.optimizer_c.step()
 
             if iteration%self.args.report_every==0:
-                pred = np.argmax(pred.detach().cpu().numpy(), axis=1)
+                pred = np.argmax(pred_s.detach().cpu().numpy(), axis=1)
                 metrics = {'Accuracy': accuracy_score(y.cpu().numpy(), pred),
                            'Total Loss': l_xent.item()}
                 print('Training... Iteration {}'.format(iteration))
                 self.print_and_log(metrics, 'train', iteration)
                 stop = self.validate(iteration)
-            iteration+=1
             if stop or iteration>=self.args.num_iterations:
                 break
         
@@ -132,7 +137,7 @@ class Trainer(object):
         self.writer.close()
         print("##########################################")
 
-    def validate(self, epoch):
+    def validate(self, iteration):
         """Validation module."""
         labels = []
         predictions = []
@@ -161,7 +166,7 @@ class Trainer(object):
         metrics = {'Accuracy': accuracy,
                     'Total Loss': total_loss}
         print('Validation... Iteration {}'.format(iteration))
-        self.print_and_log(metrics, 'val', epoch)
+        self.print_and_log(metrics, 'val', iteration)
         #Early stopping checkpoint.
         stop, is_best = self.es.count(self.ftr_ext, self.clf, accuracy)
         if is_best:
@@ -171,7 +176,7 @@ class Trainer(object):
     def adentropy(self, out):
         """Adentropy loss for the MME minimax optimization."""
         out = F.softmax(out, dim=1)
-        adentropy = -self.args.lambda_ * torch.mean(torch.sum(out * torch.log(out + 1e-10), dim=1))
+        adentropy = self.args.lambda_ * torch.mean(torch.sum(out * torch.log(out + 1e-10), dim=1))
         return adentropy
 
     def zero_grad(self):

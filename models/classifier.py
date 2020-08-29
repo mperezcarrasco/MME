@@ -15,8 +15,9 @@ class Classifier(nn.Module):
         self.num_class = num_class
         self.temp = temp
 
-    def forward(self, x, eta=0.1):
-        x = grad_reverse(x, eta)
+    def forward(self, x, grad_rev=False, eta=1.0):
+        if grad_rev:
+            x = grad_reverse(x, eta)
         x = F.normalize(x)
         x_out = self.fc(x) / self.temp
         return x_out
