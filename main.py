@@ -54,7 +54,7 @@ if __name__ == '__main__':
                          help="Name of the model to be used for the experiment.")
     parser.add_argument("--pretrain", type=bool, default=True,
                          help="If domain is not digits, if the model must be pretrained on ImageNet.")
-    parser.add_argument("--report_every", type=int, default=50,
+    parser.add_argument("--report_every", type=int, default=500,
                         help="Number of iterations from which the metrics must be reported.")
     args = parser.parse_args() 
     

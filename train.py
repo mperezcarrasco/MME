@@ -73,60 +73,59 @@ class Trainer(object):
 
         # Some images to be reconstructed every 50 epochs.
         iteration=0
-        while iteration < self.args.num_iterations:
-            for (x_s, y_s), (x_unsup_t,_), (x_sup_t, y_sup_t) in \
-                zip(cycle(self.dl_sup_s), cycle(self.dl_unsup_t), cycle(self.dl_sup_t)):
-                # Converting features to FloatTensor and to device.
-                x = torch.cat((x_s, x_sup_t), dim=0)
-                y = torch.cat((y_s, y_sup_t), dim=0)
-                x = x.float().to(self.device)
-                y = y.long().to(self.device)
-                x_sup_t = x_sup_t.float().to(self.device)
-                y_sup_t = y_sup_t.long().to(self.device)
-                x_unsup_t = x_unsup_t.float().to(self.device)
+        for (x_s, y_s), (x_unsup_t,_), (x_sup_t, y_sup_t) in \
+            zip(cycle(self.dl_sup_s), cycle(self.dl_unsup_t), cycle(self.dl_sup_t)):
+            # Converting features to FloatTensor and to device.
+            x = torch.cat((x_s, x_sup_t), dim=0)
+            y = torch.cat((y_s, y_sup_t), dim=0)
+            x = x.float().to(self.device)
+            y = y.long().to(self.device)
+            x_sup_t = x_sup_t.float().to(self.device)
+            y_sup_t = y_sup_t.long().to(self.device)
+            x_unsup_t = x_unsup_t.float().to(self.device)
 
-                self.optimizer_f = inv_lr_scheduler(param_lr_f, self.optimizer_f, iteration,
-                                       init_lr=self.args.lr)
-                self.optimizer_c = inv_lr_scheduler(param_lr_c, self.optimizer_c, iteration,
-                                       init_lr=self.args.lr)
+            self.optimizer_f = inv_lr_scheduler(param_lr_f, self.optimizer_f, iteration,
+                                   init_lr=self.args.lr)
+            self.optimizer_c = inv_lr_scheduler(param_lr_c, self.optimizer_c, iteration,
+                                   init_lr=self.args.lr)
 
-                self.ftr_ext.train()
-                self.clf.train()
-                self.zero_grad()
+            self.ftr_ext.train()
+            self.clf.train()
+            self.zero_grad()
 
-                #############################
-                # CrossEntropy Minimization #
-                #############################
-                x_out = self.ftr_ext(x)
-                pred = self.clf(x_out)
-                l_xent = F.cross_entropy(pred, y)
+            #############################
+            # CrossEntropy Minimization #
+            #############################
+            x_out = self.ftr_ext(x)
+            pred = self.clf(x_out)
+            l_xent = F.cross_entropy(pred, y)
 
-                l_xent.backward(retain_graph=True)
-                self.optimizer_f.step()
-                self.optimizer_c.step()
+            l_xent.backward(retain_graph=True)
+            self.optimizer_f.step()
+            self.optimizer_c.step()
 
-                ################
-                # Minimax Loss #
-                #################
-                self.zero_grad()
-                x_out = self.ftr_ext(x_unsup_t)
-                pred = self.clf(x_out)
-                l_mm = self.adentropy(x_out)
+            ################
+            # Minimax Loss #
+            #################
+            self.zero_grad()
+            x_out = self.ftr_ext(x_unsup_t)
+            pred = self.clf(x_out)
+            l_mm = self.adentropy(x_out)
 
-                l_mm.backward()
-                self.optimizer_f.step()
-                self.optimizer_c.step()
+            l_mm.backward()
+            self.optimizer_f.step()
+            self.optimizer_c.step()
 
-                if iteration%self.args.report_every==0:
-                    pred = np.argmax(pred.detach().cpu().numpy(), axis=1)
-                    metrics = {'Accuracy': accuracy_score(y.cpu().numpy(), pred),
-                               'Total Loss': l_xent.item()}
-                    self.print_and_log(metrics, 'train', iteration)
-                    stop = self.validate(iteration)
-                iteration+=1
-                if stop or iteration>=self.args.num_iterations:
-                    iteration=9999999
-                    break
+            if iteration%self.args.report_every==0:
+                pred = np.argmax(pred.detach().cpu().numpy(), axis=1)
+                metrics = {'Accuracy': accuracy_score(y.cpu().numpy(), pred),
+                           'Total Loss': l_xent.item()}
+                print('Training... Iteration {}'.format(iteration))
+                self.print_and_log(metrics, 'train', iteration)
+                stop = self.validate(iteration)
+            iteration+=1
+            if stop or iteration>=self.args.num_iterations:
+                break
         
         self.load_weights()
         print('Best parameters restored.')
@@ -161,6 +160,7 @@ class Trainer(object):
 
         metrics = {'Accuracy': accuracy,
                     'Total Loss': total_loss}
+        print('Validation... Iteration {}'.format(iteration))
         self.print_and_log(metrics, 'val', epoch)
         #Early stopping checkpoint.
         stop, is_best = self.es.count(self.ftr_ext, self.clf, accuracy)
@@ -186,6 +186,6 @@ class Trainer(object):
 
     def print_and_log(self, metrics, mode, epoch):
         for metric, value in metrics.items():
-            #print("{}: {:.3f}".format(metric, value))
+            print("{}: {:.3f}".format(metric, value))
             self.writer.add_scalar('{}_{}'.format(metric,mode), value, epoch)
-        #print("##########################################")
+        print("##########################################")
