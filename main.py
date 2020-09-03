@@ -6,6 +6,7 @@ from utils.utils import seed_everything
 from preprocess import get_digits, get_office
 from train import Trainer
 from test import evaluate
+from utils.return_dataset import return_dataset
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -80,7 +81,7 @@ if __name__ == '__main__':
     if args.domain == 'office':
         args.n_classes=31
         dataloader_source, dataloader_sup, dataloader_unsup, \
-        dataloader_val, dataloader_test = get_office(args)
+        dataloader_val, dataloader_test = return_dataset(args)
     elif args.domain == 'digits':
         args.n_classes=10
         dataloader_source, dataloader_sup, dataloader_unsup, \
