@@ -9,6 +9,9 @@ My attempt for reproducing [Semi-supervised Domain Adaptation via Minimax Entrop
 
 **Office31**:
 
+All the experiments were performed using the same data splits provided by the authors in their original implementation.
+
+
 Alexnet:
 |      | w->a (1-shot)| d->a (1-shot) | w->a (3-shot)| d->a (3-shot) |
 |:------------- |:-------------:| :-------------:| :-------------:| :-------------:|
