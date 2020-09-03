@@ -9,7 +9,7 @@ My attempt for reproducing [Semi-supervised Domain Adaptation via Minimax Entrop
 
 **Office31**:
 
-All the experiments were performed using the same data splits provided by the authors in their original implementation.
+All the experiments were performed using PyTorch (v1.0.0) and the same data splits provided by the authors in their original implementation.
 
 
 Alexnet:
