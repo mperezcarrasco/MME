@@ -12,8 +12,8 @@ My attempt for reproducing [Semi-supervised Domain Adaptation via Minimax Entrop
 All the experiments were performed using PyTorch (v1.0.0) and the same data splits provided by the authors in their original implementation.
 
 
-Alexnet:
+Alexnet (Accuracy):
 |      | w->a (1-shot)| d->a (1-shot) | w->a (3-shot)| d->a (3-shot) |
 |:------------- |:-------------:| :-------------:| :-------------:| :-------------:|
 | [Original Implementation](https://github.com/VisionLearningGroup/SSDA_MME/) | - | - | - | - |
-| This Implementation | - | - | - | - |
+| This Implementation | - | - | 65.88% | - |
