@@ -10,8 +10,7 @@ My attempt for reproducing [Semi-supervised Domain Adaptation via Minimax Entrop
 **Office31**:
 
 Alexnet:
-|      | 1-shot | |  3-shot| |
-|      | w->a| d->a | w->a| d->a | 
-|:------------- |:-------------:| :-------------:| :-------------:| :-------------:| :-------------:|
-| [Official Implementation](https://github.com/VisionLearningGroup/SSDA_MME/) | 0.9297 | 0.9442 |  | | 
-| This Implementation | 0.9561 | 0.9306 | | | 
+|      | w->a (1-shot)| d->a (1-shot) | w->a (3-shot)| d->a (3-shot) |
+|:------------- |:-------------:| :-------------:| :-------------:| :-------------:|
+| [Original Implementation](https://github.com/VisionLearningGroup/SSDA_MME/) | - | - | - | - |
+| This Implementation | - | - | - | - |
