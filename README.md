@@ -26,7 +26,7 @@ All the experiments were performed using PyTorch (v1.0.0) and the same data spli
 
 
 Alexnet (Accuracy):
-|      | R->C (3-shot)| R->P (3-shot) | P->C (3-shot)| C->S (3-shot) | S->P (3-shot) | R->S (3-shot) | P->R (3-shot) |
+|      | R->C \\ (3-shot)| R->P \\ (3-shot) | P->C \\ (3-shot)| C->S \\ (3-shot) | S->P \\ (3-shot) | R->S \\ (3-shot) | P->R \\ (3-shot) |
 |:------------- |:-------------:| :-------------:| :-------------:| :-------------:| :-------------:| :-------------:| :-------------:|
 | [Original Implementation](https://github.com/VisionLearningGroup/SSDA_MME/) | -% | -% | -% | -% | -% | -% | -% | 
 | This Implementation | -% | -% | -% | -% | -% | -% | -% | 
