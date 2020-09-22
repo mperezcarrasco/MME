@@ -29,4 +29,4 @@ Alexnet (Accuracy):
 |      | R->C (3-shot)| R->P (3-shot) | P->C (3-shot)| C->S (3-shot) | S->P (3-shot) | R->S (3-shot) | P->R (3-shot) |
 |:------------- |:-------------:| :-------------:| :-------------:| :-------------:| :-------------:| :-------------:| :-------------:|
 | [Original Implementation](https://github.com/VisionLearningGroup/SSDA_MME/) | 54.18% | 48.01% | -% | -% | -% | 38.80% | -% | 
-| This Implementation | -% | -% | -% | -% | -% | 36.78% | -% | 
+| This Implementation | -% | 45.19% | -% | -% | -% | 36.78% | -% | 
