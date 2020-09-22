@@ -1,3 +1,4 @@
+import os
 import torch
 import gzip
 import pickle
@@ -5,8 +6,10 @@ import numpy as np
 from PIL import Image
 from torch.utils import data
 from torchvision import datasets, transforms
-from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
+from torch.utils.data import DataLoader, TensorDataset
+from utils.data_from_list import data_fromlist, load_img
+
 
 
 ############################
@@ -27,33 +30,33 @@ def get_labeled_samples(x, y, n_samples):
     return x_sup, y_sup, ix
 
 
-##################
-# Office Dataset #
-##################
-class OfficeData(data.Dataset):
-    def __init__(self, x, y, mode):
+#############################
+# Office/DomainNet Datasets #
+#############################
+class GetData(data.Dataset):
+    def __init__(self, img_paths, domain, crop_size, mode):
         self.transforms =  {'train': transforms.Compose([
                                 transforms.Resize(256),
                                 transforms.RandomHorizontalFlip(),
-                                transforms.RandomCrop(224),
+                                transforms.RandomCrop(crop_size),
                                 transforms.ToTensor(),
                                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
                                 ]),
                             'val': transforms.Compose([
                                 transforms.Resize(256),
-                                transforms.CenterCrop(224),
+                                transforms.CenterCrop(crop_size),
                                 transforms.ToTensor(),
                                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
                                 ]),
                             'test': transforms.Compose([
                                 transforms.Resize(256),
-                                transforms.CenterCrop(224),
+                                transforms.CenterCrop(crop_size),
                                 transforms.ToTensor(),
                                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
                                 ])
                              }
-        self.x = x
-        self.y = y
+        self.base_path = './data/{}'.format(domain)
+        self.x, self.y = data_fromlist(img_paths)
         self.mode = mode
         
     def __len__(self):
@@ -67,55 +70,55 @@ class OfficeData(data.Dataset):
         Return an item from the dataset.
         """
         x = self.x[index]
-        y = self.y[index]
-        x = Image.fromarray(x)
+        x = load_img(os.path.join(self.base_path, x))
         x = self.transforms[self.mode](x)
+        y = self.y[index]
         return x, y
 
-def get_office_dataset(args, domain):
-    if domain=='source':
-        data_dir='./data/office31/{}/images/'.format(args.source)
-        data = datasets.ImageFolder(data_dir)
 
-        x_train = np.array([np.array(data[i][0]) for i in range(len(data))])
-        y_train = np.array([data[i][1] for i in range(len(data))])
+def get_dataset(args):
+    txt_path = './data/txt/{}'.format(args.domain)
+    
+    txt_file_s = os.path.join(txt_path,
+                     'labeled_source_images_{}.txt'.format(args.source))
+    
+    txt_file_t = os.path.join(txt_path,
+                     'labeled_target_images_{}_{}.txt'.format(args.target, args.n_shots))
+                              
+    txt_file_val = os.path.join(txt_path,
+                     'validation_target_images_{}_{}.txt'.format(args.target, args.n_val))
+                              
+    txt_file_unl = os.path.join(txt_path,
+                     'unlabeled_target_images_{}_{}.txt'.format(args.target, args.n_shots))
 
-        batch_size = min(args.batch_size, args.n_shots*args.n_classes)
-        dataloader_train = DataLoader(OfficeData(x_train, y_train, 'train'), 
-                                      batch_size=batch_size, shuffle=True, drop_last=True)
-        return dataloader_train
-    elif domain=='target':
-        data_dir='./data/office31/{}/images/'.format(args.target)
-        data = datasets.ImageFolder(data_dir)
-
-        x_train = np.array([np.array(data[i][0]) for i in range(len(data))])
-        y_train = np.array([data[i][1] for i in range(len(data))])
-        
-        x_val, y_val, ixs = get_labeled_samples(x_train, y_train, args.n_val)
-        dataloader_val = DataLoader(OfficeData(x_val, y_val, 'val'), 
-                         batch_size=args.batch_size*2, shuffle=False)
-        
-        x_train, y_train = np.delete(x_train, ixs, axis=0), np.delete(y_train, ixs, axis=0)
-
-        batch_size = min(args.batch_size, args.n_shots*args.n_classes)
-        x_sup, y_sup, ixs = get_labeled_samples(x_train, y_train, args.n_shots)
-        dataloader_sup = DataLoader(OfficeData(x_sup, y_sup, 'train'), batch_size=batch_size, 
-                                    shuffle=True, drop_last=True)
-
-        x_train, y_train = np.delete(x_train, ixs, axis=0), np.delete(y_train, ixs, axis=0)
-
-        dataloader_unsup = DataLoader(OfficeData(x_train, y_train, 'train'), 
-                                      batch_size=args.batch_size*2, shuffle=True)
-
-        #Same as unsupervised but shuffle=False.
-        dataloader_test = DataLoader(OfficeData(x_train, y_train, 'test'), 
-                                     batch_size=args.batch_size*2, shuffle=False)
-        return dataloader_sup, dataloader_unsup, dataloader_val, dataloader_test
-
-def get_office(args):
-    dataloader_source = get_office_dataset(args, 'source')
-    dataloader_sup, dataloader_unsup, dataloader_val, dataloader_test = get_office_dataset(args, 'target')
-    return dataloader_source, dataloader_sup, dataloader_unsup, dataloader_val, dataloader_test
+    if args.model_name == 'Alexnet':
+        crop_size = 227
+        bs = 32
+    else:
+        crop_size = 224
+        bs = 24
+    
+    source_data = GetData(txt_file_s, args.domain, crop_size, mode='train')
+    source_loader = torch.utils.data.DataLoader(source_data, 
+                    batch_size=bs, shuffle=True, drop_last=True)
+    
+    target_data = GetData(txt_file_t, args.domain, crop_size, mode='val')
+    target_loader = torch.utils.data.DataLoader(target_data,
+                    batch_size=min(bs, len(target_data)), shuffle=True, drop_last=True)
+                              
+    target_data_val = GetData(txt_file_val, args.domain, crop_size, mode='val')
+    target_loader_val = torch.utils.data.DataLoader(target_data_val,
+                        batch_size=min(bs, len(target_data_val)), shuffle=True, drop_last=True)
+                              
+    target_data_unl = GetData(txt_file_unl, args.domain, crop_size, mode='val')
+    target_loader_unl = torch.utils.data.DataLoader(target_data_unl, 
+                        batch_size=bs * 2, shuffle=True, drop_last=True)
+                              
+    target_data_test = GetData(txt_file_unl, args.domain, crop_size, mode='test')
+    target_loader_test = torch.utils.data.DataLoader(target_data_test,
+                         batch_size=bs * 2, shuffle=True, drop_last=True)
+                         
+    return source_loader, target_loader, target_loader_unl, target_loader_val, target_loader_test
 
 
 ##################

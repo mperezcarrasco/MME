@@ -1,7 +1,6 @@
 import torch
 from torch.optim import SGD
 from torch.nn import functional as F
-#from torch.utils.tensorboard import SummaryWriter
 
 from models.main import build_network, build_classifier
 from sklearn.metrics import accuracy_score
@@ -70,7 +69,8 @@ class Trainer(object):
         param_lr_c = []
         for param_group in self.optimizer_c.param_groups:
             param_lr_c.append(param_group["lr"])
-
+        
+        stop=False
         for iteration in range(self.args.num_iterations):
             if iteration % len(self.dl_sup_s) == 0:
                 iter_sup_s = iter(self.dl_sup_s)
@@ -122,9 +122,9 @@ class Trainer(object):
             self.optimizer_f.step()
             self.optimizer_c.step()
 
-            if iteration%self.args.report_every==0:
+            if iteration%self.args.report_every==0 and iteration>0:
                 pred = np.argmax(pred_s.detach().cpu().numpy(), axis=1)
-                metrics = {'Accuracy': accuracy_score(y.cpu().numpy(), pred),
+                metrics = {'Accuracy': accuracy_score(y.cpu().numpy(), pred)*100,
                            'Total Loss': l_xent.item()}
                 print('Training... Iteration {}'.format(iteration))
                 self.print_and_log(metrics, 'train', iteration)
@@ -161,7 +161,7 @@ class Trainer(object):
         predictions = np.argmax(torch.cat(predictions).numpy(), axis=1)
         labels = torch.cat(labels).numpy()
         total_loss /= len(self.dl_val_t)
-        accuracy = accuracy_score(labels, predictions)
+        accuracy = accuracy_score(labels, predictions)*100
 
         metrics = {'Accuracy': accuracy,
                     'Total Loss': total_loss}
@@ -191,6 +191,6 @@ class Trainer(object):
 
     def print_and_log(self, metrics, mode, epoch):
         for metric, value in metrics.items():
-            print("{}: {:.3f}".format(metric, value))
+            print("{}: {:.2f}".format(metric, value))
             self.writer.add_scalar('{}_{}'.format(metric,mode), value, epoch)
         print("##########################################")

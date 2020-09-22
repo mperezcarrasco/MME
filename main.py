@@ -3,10 +3,9 @@ import torch
 import argparse
 
 from utils.utils import seed_everything
-from preprocess import get_digits, get_office
+from preprocess import get_digits, get_dataset
 from train import Trainer
 from test import evaluate
-from utils.return_dataset import return_dataset
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -38,13 +37,13 @@ if __name__ == '__main__':
     parser.add_argument("--lambda_", type=float, default=0.1,
                         help="Hyperparameter lambda.")
     parser.add_argument("--domain", type=str, default='digits',
-                         choices=['digits', 'office'],
+                         choices=['digits', 'office', 'multi'],
                          help="Domain from which the dataset belongs.")
     parser.add_argument("--source", type=str, default='mnist',
-                         choices=['mnist', 'usps', 'svhn', 'webcam', 'amazon', 'dslr'],
+                         choices=['mnist', 'usps', 'svhn', 'webcam', 'amazon', 'dslr', 'real', 'sketch', 'painting', 'clipart'],
                          help="Dataset to be used as source for the experiment.")
     parser.add_argument("--target", type=str, default='mnist',
-                         choices=['mnist', 'usps', 'svhn', 'webcam', 'amazon', 'dslr'],
+                         choices=['mnist', 'usps', 'svhn', 'webcam', 'amazon', 'dslr', 'real', 'sketch', 'painting', 'clipart'],
                          help="Dataset to be used as target for the experiment.")
     parser.add_argument("--n_shots", type=int, default=3,
                          help="Number of labeled samples to be used for the target.")
@@ -57,8 +56,8 @@ if __name__ == '__main__':
                          help="If domain is not digits, if the model must be pretrained on ImageNet.")
     parser.add_argument("--report_every", type=int, default=500,
                         help="Number of iterations from which the metrics must be reported.")
-    args = parser.parse_args() 
-    
+    args = parser.parse_args()
+
     seed_everything()
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -81,13 +80,18 @@ if __name__ == '__main__':
     if args.domain == 'office':
         args.n_classes=31
         dataloader_source, dataloader_sup, dataloader_unsup, \
-        dataloader_val, dataloader_test = return_dataset(args)
+        dataloader_val, dataloader_test = get_dataset(args)
     elif args.domain == 'digits':
         args.n_classes=10
         dataloader_source, dataloader_sup, dataloader_unsup, \
          dataloader_val, dataloader_test = get_digits(args)
+    elif args.domain == 'multi':
+        args.n_classes=126
+        dataloader_source, dataloader_sup, dataloader_unsup, \
+         dataloader_val, dataloader_test = get_dataset(args)
 
-    mme = Trainer(args, 
+
+    mme = Trainer(args,
                 device,
                 writer,
                 directory,

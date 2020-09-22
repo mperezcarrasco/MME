@@ -10,7 +10,7 @@ from sklearn.metrics import accuracy_score
 from utils.utils import seed_everything, save_metrics
 
 from models.main import build_network, build_classifier
-from preprocess import get_digits, get_office
+from preprocess import get_digits, get_dataset
 
 
 def evaluate(ftr_extractor, classifier, device, dataloader, directory, mode, args):
@@ -51,7 +51,7 @@ def evaluate(ftr_extractor, classifier, device, dataloader, directory, mode, arg
     labels = torch.cat(labels).numpy()
     total_loss /= len(dataloader)
 
-    metrics = {'Accuracy': accuracy_score(labels, predictions),
+    metrics = {'Accuracy': accuracy_score(labels, predictions)*100,
                 'Total Loss': total_loss}
     print_metrics(metrics)
     save_metrics(metrics, directory, mode)
@@ -59,7 +59,7 @@ def evaluate(ftr_extractor, classifier, device, dataloader, directory, mode, arg
 
 def print_metrics(metrics):
     for metric, value in metrics.items():
-        print("{}: {:.3f}".format(metric, value))
+        print("{}: {:.2f}".format(metric, value))
     print("##########################################")
 
 
@@ -102,10 +102,13 @@ if __name__ == '__main__':
 
     if args.domain == 'office':
         args.n_classes=31
-        _, _, _, _, dataloader_test = get_office(args)
+        _, _, _, _, dataloader_test = get_dataset(args)
     elif args.domain == 'digits':
         args.n_classes=10
         _, _, _, _, dataloader_test = get_digits(args)
+    elif args.domain == 'multi':
+        args.n_classes=126
+        _, _, _, _, dataloader_test = get_dataset(args)
 
     # Call the model.
     model = build_network(args).to(device)
