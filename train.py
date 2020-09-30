@@ -86,8 +86,6 @@ class Trainer(object):
             y = torch.cat((y_s, y_sup_t), dim=0)
             x = x.float().to(self.device)
             y = y.long().to(self.device)
-            x_sup_t = x_sup_t.float().to(self.device)
-            y_sup_t = y_sup_t.long().to(self.device)
             x_unsup_t = x_unsup_t.float().to(self.device)
 
             self.optimizer_f = inv_lr_scheduler(param_lr_f, self.optimizer_f, iteration,
