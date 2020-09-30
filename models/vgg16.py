@@ -15,7 +15,11 @@ class VGG16(nn.Module):
 
         model = models.vgg16(pretrained=args.pretrain)
         self.features = model.features
-        self.classifier = model.classifier
+        
+        self.classifier = nn.Sequential()
+        for i in range(6):
+            self.classifier.add_module("classifier" + str(i),
+                                       model.classifier[i])
 
     def forward(self, x):
         x = self.features(x)
