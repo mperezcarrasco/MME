@@ -102,7 +102,7 @@ def get_dataset(args):
     source_loader = torch.utils.data.DataLoader(source_data, 
                     batch_size=bs, shuffle=True, drop_last=True)
     
-    target_data = GetData(txt_file_t, args.domain, crop_size, mode='val')
+    target_data = GetData(txt_file_t, args.domain, crop_size, mode='train')
     target_loader = torch.utils.data.DataLoader(target_data,
                     batch_size=min(bs, len(target_data)), shuffle=True, drop_last=True)
                               
@@ -110,7 +110,7 @@ def get_dataset(args):
     target_loader_val = torch.utils.data.DataLoader(target_data_val,
                         batch_size=min(bs, len(target_data_val)), shuffle=True, drop_last=True)
                               
-    target_data_unl = GetData(txt_file_unl, args.domain, crop_size, mode='val')
+    target_data_unl = GetData(txt_file_unl, args.domain, crop_size, mode='train')
     target_loader_unl = torch.utils.data.DataLoader(target_data_unl, 
                         batch_size=bs * 2, shuffle=True, drop_last=True)
                               
